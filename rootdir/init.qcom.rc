@@ -136,6 +136,9 @@ on boot
     # Set the console loglevel to < KERN_INFO
     # Set the default message loglevel to KERN_INFO
     write /proc/sys/kernel/printk "6 6 1 7"
+	
+    # bond0 used by FST Manager
+    chown wifi wifi /sys/class/net/bond0/bonding/queue_id	
 
     chown wifi wifi /sys/module/wlan/parameters/fwpath
 
@@ -208,6 +211,9 @@ on post-fs-data
     mkdir /data/vendor/location-partner/ppe 0770 gps gps
     mkdir /dev/socket/location 0770 gps gps
     mkdir /dev/socket/location/ehub 0770 gps gps
+	
+    #Create directory for hostapd
+    mkdir /data/hostapd 0770 system wifi	
 
     # Create /data/vendor/time folder for time-services
     mkdir /data/vendor/time/ 0700 system system
@@ -304,19 +310,6 @@ service vendor.rmt_storage /vendor/bin/rmt_storage
     shutdown critical
     ioprio rt 0
     writepid /dev/cpuset/system-background/tasks
-	
-on property:vendor.wc_transport.start_hci=true
-    start vendor.start_hci_filter
-
-on property:vendor.wc_transport.start_hci=false
-    stop vendor.start_hci_filter
-
-service vendor.start_hci_filter /system/vendor/bin/wcnss_filter
-    class late_start
-    user bluetooth
-    group bluetooth diag system wakelock
-    seclabel u:r:bluetooth:s0
-    disabled	
 
 service vendor.tftp_server /vendor/bin/tftp_server
    class core
@@ -382,14 +375,6 @@ service wpa_supplicant /vendor/bin/hw/wpa_supplicant \
     socket vendor_wpa_wlan0 dgram 660 wifi wifi
     disabled
     oneshot
-	
-# Data Migration
-service vendor.move_wifi_data /system/bin/move_wifi_data.sh
-    class main
-    user  wifi
-    group wifi
-    disabled
-    oneshot	
 
 service loc_launcher /vendor/bin/loc_launcher
     class late_start
